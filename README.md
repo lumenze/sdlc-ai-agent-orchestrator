@@ -136,7 +136,6 @@ Developer edits, tests, commits to GitHub
 CI/CD pipeline runs validations
 
 ---
-
 ## 🔐 Future Enhancements
 - CI/CD GitHub Action support (auto-format, lint, test)
 - Cost control by LLM + model-level quotas
