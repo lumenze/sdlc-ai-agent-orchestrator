@@ -5,51 +5,42 @@ on:
     branches:
       - develop
 
-env:
-  ENV_FILE_NAME: .env
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: dev  # 👈 important: use GitHub environment named 'dev'
+    environment: dev
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Validate TARGET_DIR_DEV secret
-        run: |
-          if [ -z "${{ secrets.TARGET_DIR_DEV }}" ]; then
-            echo "❌ TARGET_DIR_DEV is not set."
-            exit 1
-          else
-            echo "✅ TARGET_DIR_DEV is set to: ${{ secrets.TARGET_DIR_DEV }}"
-          fi
 
       - name: Add SSH key
         run: |
           echo "${{ secrets.EC2_KEY }}" | base64 --decode > ec2_key.pem
           chmod 600 ec2_key.pem
 
-      - name: Ensure Dev target directory exists
+      - name: Ensure Dev target directory exists on EC2
         run: |
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-            "mkdir -p '${{ secrets.TARGET_DIR_DEV }}'"
+          "mkdir -p '${{ secrets.TARGET_DIR_DEV }}'"
 
       - name: Copy code to EC2 (Dev)
         run: |
-          rsync -az --exclude='.git' -e "ssh -i ec2_key.pem -o StrictHostKeyChecking=no" ./ \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:'${{ secrets.TARGET_DIR_DEV }}'
+          rsync -az -e "ssh -i ec2_key.pem -o StrictHostKeyChecking=no" ./ \
+          ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:'${{ secrets.TARGET_DIR_DEV }}'
 
       - name: Copy .env to EC2 (Dev)
         run: |
-          rsync -az -e "ssh -i ec2_key.pem -o StrictHostKeyChecking=no" $ENV_FILE_NAME \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:'${{ secrets.TARGET_DIR_DEV }}/.env'
+          echo "${{ secrets.ENV_FILE }}" > .env
+          rsync -az -e "ssh -i ec2_key.pem -o StrictHostKeyChecking=no" .env \
+          ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:'${{ secrets.TARGET_DIR_DEV }}/.env'
+          rm .env
 
-      - name: Deploy to Dev via SSH
+      - name: Deploy on Dev EC2
         run: |
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
             cd '${{ secrets.TARGET_DIR_DEV }}'
+            sed -i 's/"8000:8000"/"8000:8000"/' docker-compose.yml
             docker-compose down || true
             docker-compose build
             docker-compose up -d
