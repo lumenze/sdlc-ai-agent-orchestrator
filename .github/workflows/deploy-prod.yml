@@ -6,26 +6,31 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Add SSH key
         run: |
-          echo "$EC2_KEY" > ec2_key.pem
+          echo "${{ secrets.EC2_KEY }}" | base64 --decode > ec2_key.pem
           chmod 600 ec2_key.pem
-        env:
-          EC2_KEY: ${{ secrets.EC2_KEY }}
+
+      - name: Ensure Prod Target Directory Exists
+        run: |
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+          "mkdir -p ${{ secrets.TARGET_DIR_PROD }}"
 
       - name: Copy files to EC2 (Prod)
         run: |
-          rsync -az -e "ssh -i ec2_key.pem -o StrictHostKeyChecking=no" ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/ubuntu/app/prod
+          rsync -az -e "ssh -i ec2_key.pem -o StrictHostKeyChecking=no" ./ \
+          ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ secrets.TARGET_DIR_PROD }}
 
       - name: Deploy to Prod via SSH
         run: |
-          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            cd /home/ubuntu/app/prod
-            sed -i 's/\"8000:8000\"/\"8002:8000\"/' docker-compose.yml
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
+            cd ${{ secrets.TARGET_DIR_PROD }}
+            sed -i 's/"8000:8000"/"8002:8000"/' docker-compose.yml
             docker-compose down || true
             docker-compose build
             docker-compose up -d
