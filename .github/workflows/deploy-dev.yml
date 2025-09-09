@@ -15,7 +15,7 @@ jobs:
 
     - name: Add SSH key
       run: |
-        echo "${{ secrets.EC2_KEY }}" > ec2_key.pem
+        echo "${{ secrets.EC2_KEY }}" | base64 --decode > ec2_key.pem
         chmod 600 ec2_key.pem
 
     - name: Copy files to EC2
@@ -27,6 +27,6 @@ jobs:
         ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
           cd ${{ secrets.TARGET_DIR }} &&
           docker-compose down || true &&
-          docker-compose build &&
+          docker-compose build &&\
           docker-compose up -d
         "
