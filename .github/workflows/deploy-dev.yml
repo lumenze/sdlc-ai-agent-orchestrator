@@ -30,9 +30,9 @@ jobs:
 
       - name: Deploy to Dev via SSH
         run: |
-          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
-            cd ${{ secrets.TARGET_DIR_DEV }}
-            docker-compose down || true
-            docker-compose build
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
+            cd ${{ secrets.TARGET_DIR_DEV }} &&
+            docker-compose down || true &&
+            docker-compose build &&
             docker-compose up -d
-          EOF
+          "
