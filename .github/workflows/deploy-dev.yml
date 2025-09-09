@@ -13,12 +13,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Validate TARGET_DIR_DEV secret
+        run: |
+          if [ -z "${{ secrets.TARGET_DIR_DEV }}" ]; then
+            echo "❌ TARGET_DIR_DEV is not set."
+            exit 1
+          else
+            echo "✅ TARGET_DIR_DEV is set to: ${{ secrets.TARGET_DIR_DEV }}"
+          fi
+
       - name: Add SSH key
         run: |
           echo "${{ secrets.EC2_KEY }}" | base64 --decode > ec2_key.pem
           chmod 600 ec2_key.pem
 
-      - name: Ensure Dev Target Directory Exists
+      - name: Ensure Dev target directory exists on EC2
         run: |
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
           "mkdir -p '${{ secrets.TARGET_DIR_DEV }}'"
@@ -26,12 +35,12 @@ jobs:
       - name: Copy files to EC2 (Dev)
         run: |
           rsync -az -e "ssh -i ec2_key.pem -o StrictHostKeyChecking=no" ./ \
-          ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ secrets.TARGET_DIR_DEV }}
+          ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:'${{ secrets.TARGET_DIR_DEV }}'
 
       - name: Deploy to Dev via SSH
         run: |
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
-            cd "${{ secrets.TARGET_DIR_DEV }}"
+            cd '${{ secrets.TARGET_DIR_DEV }}'
             docker-compose down || true
             docker-compose build
             docker-compose up -d
