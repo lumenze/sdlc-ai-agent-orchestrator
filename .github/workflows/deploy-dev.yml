@@ -20,8 +20,7 @@ jobs:
 
       - name: Ensure Dev Target Directory Exists
         run: |
-          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-          "mkdir -p ${{ secrets.TARGET_DIR_DEV }}"
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p ${{ secrets.TARGET_DIR_DEV }}"
 
       - name: Copy files to EC2 (Dev)
         run: |
