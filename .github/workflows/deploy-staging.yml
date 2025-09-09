@@ -6,6 +6,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: staging
 
     steps:
       - name: Checkout code
@@ -16,20 +17,27 @@ jobs:
           echo "${{ secrets.EC2_KEY }}" | base64 --decode > ec2_key.pem
           chmod 600 ec2_key.pem
 
-      - name: Ensure Staging Target Directory Exists
+      - name: Ensure Staging target directory exists
         run: |
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-          "mkdir -p ${{ secrets.TARGET_DIR_STAGING }}"
+          "mkdir -p '${{ secrets.TARGET_DIR_STAGING }}'"
 
-      - name: Copy files to EC2 (Staging)
+      - name: Copy code to EC2 (Staging)
         run: |
           rsync -az -e "ssh -i ec2_key.pem -o StrictHostKeyChecking=no" ./ \
-          ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ secrets.TARGET_DIR_STAGING }}
+          ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:'${{ secrets.TARGET_DIR_STAGING }}'
 
-      - name: Deploy to Staging via SSH
+      - name: Copy .env to EC2 (Staging)
+        run: |
+          echo "${{ secrets.ENV_FILE }}" > .env
+          rsync -az -e "ssh -i ec2_key.pem -o StrictHostKeyChecking=no" .env \
+          ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:'${{ secrets.TARGET_DIR_STAGING }}/.env'
+          rm .env
+
+      - name: Deploy on Staging EC2
         run: |
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
-            cd ${{ secrets.TARGET_DIR_STAGING }}
+            cd '${{ secrets.TARGET_DIR_STAGING }}'
             sed -i 's/"8000:8000"/"8001:8000"/' docker-compose.yml
             docker-compose down || true
             docker-compose build
