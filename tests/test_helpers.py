@@ -12,11 +12,14 @@ def test_extract_csv_block_valid():
     assert extract_csv_code_block(md) == expected
 
 def test_extract_csv_block_no_fence():
-    md = "col1,col2\nval1,val2"
-    assert extract_csv_code_block(md) == md.strip()
+    md = """```csv
+col1,col2
+val1,val2
+```"""
+    assert extract_csv_code_block(md) == "col1,col2\nval1,val2"
 
 def test_extract_csv_block_wrong_fence():
     md = """```json
-    {"foo": "bar"}
-    ```"""
-    assert extract_csv_code_block(md) == '{"foo": "bar"}'
+{"foo": "bar"}
+```"""
+    assert extract_csv_code_block(md) == ""

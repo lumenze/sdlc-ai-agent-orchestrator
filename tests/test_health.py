@@ -1,5 +1,8 @@
+# tests/test_health.py
 from fastapi.testclient import TestClient
-from src.api.main import app  # This should already include the router
+from src.api.main import app
+
+client = TestClient(app)
 
 def test_health_check():
     response = client.get("/health")
