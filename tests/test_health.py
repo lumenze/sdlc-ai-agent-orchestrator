@@ -1,5 +1,9 @@
-from fastapi.testclient import TestClient  # ✅ Ensure this is from FastAPI
-from src.api.main import app  # This should point to your FastAPI app instance
+import fastapi
+import fastapi.testclient
+from fastapi.testclient import TestClient
+from src.api.main import app
+
+assert hasattr(fastapi.testclient, "TestClient"), "⚠️ TestClient missing from FastAPI"
 
 client = TestClient(app)
 
