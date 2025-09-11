@@ -1,5 +1,4 @@
-# tests/test_health.py
-from fastapi.testclient import TestClient
+from fastapi.testclient import TestClient  # ✅ NOT starlette
 from src.api.main import app
 
 client = TestClient(app)
