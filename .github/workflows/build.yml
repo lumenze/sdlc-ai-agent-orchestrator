@@ -24,6 +24,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run tests
+      - name: Set environment variables
+        run: echo "PYTHONPATH=./src" >> $GITHUB_ENV
+
+      - name: Run tests with pytest
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          pytest
+          pytest tests/ --disable-warnings -v
