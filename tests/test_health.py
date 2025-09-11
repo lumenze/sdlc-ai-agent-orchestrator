@@ -1,5 +1,5 @@
-from fastapi.testclient import TestClient  # ✅ NOT starlette
-from src.api.main import app
+from fastapi.testclient import TestClient  # ✅ Ensure this is from FastAPI
+from src.api.main import app  # This should point to your FastAPI app instance
 
 client = TestClient(app)
 
