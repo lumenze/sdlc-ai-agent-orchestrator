@@ -4,7 +4,7 @@ services:
   web:
     build: .
     ports:
-      - "8000:8000"
+      - "8001:8000"  # Host port 8001 → Container port 8000 (to avoid clash with dev/prod)
     env_file:
       - .env
     volumes:
@@ -19,6 +19,7 @@ services:
 
   redis:
     image: redis:7
-    ports:
-      - "6379:6379"
     restart: unless-stopped
+    # 🔥 REMOVE port binding to prevent clash with other redis services
+    # ports:
+    #   - "6379:6379"
