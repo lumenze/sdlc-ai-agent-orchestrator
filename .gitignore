@@ -1,4 +1,10 @@
 __pycache__/
 .env
+.env.dev
+.env.staging
+.env.prod
 *.pyc
 .venv/
+.env.dev
+.env.staging
+.env.prod
