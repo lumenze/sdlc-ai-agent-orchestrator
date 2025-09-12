@@ -54,4 +54,5 @@ jobs:
             docker-compose -p staging_project up -d
             
             echo "✅ Staging deployment completed"
+            exit
           EOF
