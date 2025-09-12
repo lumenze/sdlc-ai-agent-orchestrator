@@ -36,10 +36,22 @@ jobs:
 
       - name: Deploy on Staging EC2
         run: |
-          ssh -tt -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
+          ssh -tt -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e
+            echo "📁 Switching to target dir"
             cd '${{ secrets.TARGET_DIR_STAGING }}'
-            sed -i 's/"8000:8000"/"8001:8000"/' docker-compose.yml
-            docker compose -p staging down || true
-            docker compose -p staging build
-            docker compose -p staging up -d
+            
+            echo "🔧 Adjusting ports in docker-compose.yml"
+            sed -i 's/"8000:8000"/"8001:8000"/' docker-compose.yml || true
+            
+            echo "🧹 Bringing down existing containers"
+            docker-compose -p staging_project down || true
+            
+            echo "🏗️ Rebuilding containers"
+            docker-compose -p staging_project build
+            
+            echo "🚀 Starting containers"
+            docker-compose -p staging_project up -d
+            
+            echo "✅ Staging deployment completed"
           EOF
