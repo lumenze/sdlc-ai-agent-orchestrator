@@ -45,7 +45,7 @@ jobs:
             sed -i 's/"8000:8000"/"8001:8000"/' docker-compose.yml || true
             
             echo "🧹 Bringing down existing containers"
-            docker-compose -p staging_project down || true
+            docker-compose -p staging down || true
             
             echo "🏗️ Rebuilding containers"
             docker-compose -p staging_project build

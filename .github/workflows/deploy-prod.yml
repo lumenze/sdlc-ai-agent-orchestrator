@@ -40,7 +40,7 @@ jobs:
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
             cd '${{ secrets.TARGET_DIR_PROD }}'
             sed -i 's/"8000:8000"/"8002:8000"/' docker-compose.yml
-            docker-compose down || true
-            docker-compose build
-            docker-compose up -d
+            docker-compose -p prod down || true
+            docker-compose -p prod build
+            docker-compose -p prod up -d
           EOF
