@@ -27,19 +27,25 @@ jobs:
           rsync -az -e "ssh -i ec2_key.pem -o StrictHostKeyChecking=no" ./ \
           ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:'${{ secrets.TARGET_DIR_STAGING }}'
 
-      - name: Copy .env to EC2 (Staging)
+      - name: Copy .env.staging to EC2 (Staging)
         run: |
-          echo "${{ secrets.ENV_FILE }}" > .env
-          rsync -az -e "ssh -i ec2_key.pem -o StrictHostKeyChecking=no" .env \
-          ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:'${{ secrets.TARGET_DIR_STAGING }}/.env'
-          rm .env
+          echo "${{ secrets.ENV_FILE_STAGING }}" > .env.staging
+          rsync -az -e "ssh -i ec2_key.pem -o StrictHostKeyChecking=no" .env.staging \
+          ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:'${{ secrets.TARGET_DIR_STAGING }}/.env.staging'
+          rm .env.staging
 
       - name: Deploy on Staging EC2
         run: |
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
             cd '${{ secrets.TARGET_DIR_STAGING }}'
-            sed -i 's/"8000:8000"/"8001:8000"/' docker-compose.yml
-            docker-compose down || true
-            docker-compose build
-            docker-compose up -d
+
+            # Optional: dynamically change port if needed (or skip this if using env vars instead)
+            sed -i 's/"8000:8000"/"8001:8000"/' docker-compose.yml || true
+
+            # Use the correct env file for staging
+            docker-compose --env-file .env.staging -p staging_project down || true
+            docker-compose --env-file .env.staging -p staging_project build
+            docker-compose --env-file .env.staging -p staging_project up -d
+
+            echo "✅ Staging deployment completed successfully"
           EOF
