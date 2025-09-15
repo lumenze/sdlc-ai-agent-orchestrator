@@ -12,7 +12,7 @@ async def generate_tickets(requirements_file: UploadFile = File(...)):
     try:
         content = await requirements_file.read()
         if not content:
-            raise HTTPException(status_code=400, detail="Uploaded file is empty")
+            raise HTTPException(status_code=400, detail="Uploaded file is empty...")
 
         content_str = content.decode("utf-8")
 
