@@ -27,12 +27,12 @@ jobs:
           rsync -az -e "ssh -i ec2_key.pem -o StrictHostKeyChecking=no" ./ \
           ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:'${{ secrets.TARGET_DIR_STAGING }}'
 
-      - name: Copy .env to EC2 (Staging)
+      - name: Copy .env.staging to EC2 (Staging)
         run: |
-          echo "${{ secrets.ENV_FILE_STAGING }}" > .env
-          rsync -az -e "ssh -i ec2_key.pem -o StrictHostKeyChecking=no" .env \
-          ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:'${{ secrets.TARGET_DIR_STAGING }}/.env'
-          rm .env
+          echo "${{ secrets.ENV_FILE_STAGING }}" > .env.staging
+          rsync -az -e "ssh -i ec2_key.pem -o StrictHostKeyChecking=no" .env.staging \
+          ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:'${{ secrets.TARGET_DIR_STAGING }}/.env.staging'
+          rm .env.staging
 
       - name: Deploy on Staging EC2
         run: |
