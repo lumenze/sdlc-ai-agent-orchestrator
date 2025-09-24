@@ -1,134 +1,141 @@
 # 🛠️ Lumenze SDLC AI Agent — Local Development Guide
 
-Welcome to the local development setup for the SDLC AI Agent Orchestrator service. This backend service converts feature requirements into structured Jira tickets using LLMs like GPT-4.
+Welcome to the local development setup for the SDLC AI Agent Orchestrator. This backend service converts feature requirements into structured Jira tickets using LLMs like GPT-4o.
 
 ---
 
-## 🚀 Project Structure (Overview)
+## 📓 Prerequisites
 
-```
-sdlc-ai-agent-orchestrator/
-├── docker-compose.yml
-├── Dockerfile
-├── requirements/            # Sample requirement .md files
-├── templates/               # Prompt templates
-├── src/
-│   ├── api/                 # FastAPI entrypoint and route handlers
-│   ├── core/                # LLM client, logger
-│   ├── config/              # Environment & settings
-│   ├── utils/               # Markdown → CSV helper, cache
-│   └── services/            # (Optional future service layer)
-```
+> These are needed **on the host machine**. Docker will handle the rest.
+
+### Required Tools:
+
+* [Git](https://git-scm.com/downloads)
+* [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+
+  * Make sure Docker is installed, running, and you have access to Docker CLI
+
+> **No need to install Python, Redis, or FastAPI** on your host machine.
 
 ---
 
-## 📦 Setup Instructions
-
-### 1. 🔁 Clone Repo & Create Virtual Env
+## 🚀 Step 1: Clone the Repository
 
 ```bash
 git clone https://github.com/your-org/sdlc-ai-agent-orchestrator.git
 cd sdlc-ai-agent-orchestrator
-
-python3 -m venv .venv
-source .venv/bin/activate
 ```
 
 ---
 
-### 2. 📄 Install Dependencies
+## 🔐 Step 2: Set Up Environment Variables
 
-```bash
-pip install -r requirements.txt
-```
+Create a `.env.dev` file in the root of the project (same directory as `docker-compose.local.yml`):
 
-If you're using file upload via FastAPI:
-```bash
-pip install python-multipart
-```
-
----
-
-### 3. 🔐 Environment Variables
-
-Create a `.env` file in the root of the repo:
+### Example `.env.dev`
 
 ```dotenv
-OPENAI_API_KEY=sk-xxx-your-key-here
+OPENAI_API_KEY=sk-xxx-your-api-key
+WEB_PORT=8000
+REDIS_PORT=6379
 ```
+
+If you have additional variables (e.g., Slack webhook, Claude key, etc.), include them here.
 
 ---
 
-### 4. ▶️ Run the API Server (Dev)
+## 🔄 Step 3: Run Locally with Docker
 
 ```bash
-uvicorn src.api.main:app --reload
+docker-compose -f docker-compose.local.yml up --build
 ```
 
-- Open browser: [http://localhost:8000/docs](http://localhost:8000/docs) to access Swagger UI
+This will:
+
+* Build the image
+* Start FastAPI server at `http://localhost:8000`
+* Start Redis cache
+
+### Access the Swagger UI
+
+[http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
 
-## 📤 Using the API (cURL)
+## 📲 Step 4: API Usage
 
-Upload a Markdown file and download Jira ticket CSV:
+Use Swagger UI or `curl` to test file upload:
 
 ```bash
-curl -X POST http://localhost:8000/generate-tickets   -F "requirements_file=@requirements/samples/login_dashboard.md"   --output generated_tickets.csv
+curl -X POST http://localhost:8000/generate-tickets \
+  -F "requirements_file=@requirements/samples/login_dashboard.md" \
+  --output generated_tickets.csv
 ```
 
 ---
 
-## 🧪 Running Tests
+## 📊 Step 5: Logs & Caching
+
+* Logs: Displayed in terminal with timestamps
+* Caching: Stored in `.cache/` folder locally to reduce LLM token usage
+
+  * Clear with: `rm -rf .cache/`
+
+---
+
+## ❌ Step 6: Stop or Cleanup
+
+Stop services (without removing volumes):
 
 ```bash
-pytest tests/
+docker-compose -f docker-compose.local.yml down
 ```
 
----
-
-## 🐳 Docker (Optional)
-
-### 1. Build & Run API Container
+Stop and remove everything including volumes:
 
 ```bash
-docker build -t sdlc-api .
-docker run -p 8000:8000 sdlc-api
+docker-compose -f docker-compose.local.yml down -v
 ```
 
-Or use `docker-compose`:
+Optional global cleanup:
 
 ```bash
-docker-compose up --build
+docker system prune -f
 ```
 
 ---
 
-## 🗃️ Caching (Local)
+## 🤝 Common Errors & Fixes
 
-Responses are cached in `.cache/` folder to reduce GPT token usage.
-
-- Clear cache: `rm -rf .cache/`
-
----
-
-## 🔍 Logs
-
-Logs are output to the console with timestamp and log level using a centralized logger (`src/core/logger.py`).
+| Error                        | Likely Cause                     | Fix                                            |
+| ---------------------------- | -------------------------------- | ---------------------------------------------- |
+| `OPENAI_API_KEY must be set` | Missing or unreadable `.env.dev` | Ensure the file exists and is correctly named  |
+| `Cannot connect to Redis`    | Redis container failed to start  | Check Docker logs and port conflicts           |
+| 404 on `/generate-tickets`   | Wrong route or server not up     | Verify FastAPI server is running and reachable |
 
 ---
 
-## 🤝 Contributing
+## 🔧 Debugging Tips
 
-1. Fork repo
-2. Create feature branch
-3. Push PR with context and test coverage
+* Confirm containers:
+
+  ```bash
+  docker ps
+  ```
+* Inspect logs:
+
+  ```bash
+  docker-compose -f docker-compose.local.yml logs -f
+  ```
+* Bash into running container:
+
+  ```bash
+  docker exec -it <container_name> /bin/bash
+  ```
 
 ---
 
-## 📬 Questions?
+## 🙋 Questions?
 
-Contact: [Sharon Bose](mailto:bose@lumenze.com)  
+Contact: [Sharon Bose](mailto:bose@lumenze.com)
 Project: [Lumenze AI Orchestrator](https://github.com/your-org/sdlc-ai-agent-orchestrator)
-
----

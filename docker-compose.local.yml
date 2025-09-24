@@ -1,24 +1,30 @@
+# docker-compose.local.yml
+
 version: "3.9"
 
 services:
-  web:
-    build: .
+  sdlc-agent:
+    container_name: sdlc-agent-local
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "${WEB_PORT:-8000}:8000"  # Use 8000 if WEB_PORT not defined
-    env_file:
-      - .env
+      - "8000:8000"
     volumes:
       - .:/app
-    restart: unless-stopped
+    env_file:
+      - .env.dev
+    working_dir: /app
     depends_on:
       - redis
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
 
   redis:
     image: redis:7
     ports:
-      - "${REDIS_PORT:-6379}:6379"  # Optional: use different redis ports
+      - "6379:6379"
     restart: unless-stopped
